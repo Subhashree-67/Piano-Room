@@ -370,9 +370,25 @@ function voiceOn(n){
   ns.connect(nf);nf.connect(ng);ng.connect(env);ns.start(t);
   voices[n]={rel,oscs};
 }
-function voiceOff(n,tc=.12){
-  const v=voices[n];if(!v)return;delete voices[n];
-  const t=ac.currentTime;v.rel.gain.setTargetAtTime(0,t,tc);v.oscs.forEach(o=>{try{o.stop(t+tc*8)}catch(e){}});
+function voiceOff(n, tc = 0.12) {
+  const v = voices[n];
+  if (!v || !ac) return;
+
+  delete voices[n];
+
+  const t = ac.currentTime;
+
+  // Fade the old voice out smoothly
+  v.rel.gain.cancelScheduledValues(t);
+  v.rel.gain.setValueAtTime(v.rel.gain.value, t);
+  v.rel.gain.setTargetAtTime(0, t, tc);
+
+  // Stop oscillators after the fade
+  v.oscs.forEach(o => {
+    try {
+      o.stop(t + tc * 6);
+    } catch (e) {}
+  });
 }
 const els={};
 function press(n){held.add(n);voiceOn(n);els[n]&&els[n].classList.add('on');learnNote(n)}
